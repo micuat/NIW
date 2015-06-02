@@ -8,6 +8,7 @@ public class NiwController : MonoBehaviour {
 	public Camera cameraCenter;
 	public Camera cameraLeft;
 	public Camera cameraRight;
+	public Camera cameraFloor;
 
 	// Use this for initialization
 	void Start () {
@@ -29,6 +30,8 @@ public class NiwController : MonoBehaviour {
 		               cameraCenter.transform.position.z, cameraCenter.transform.position.y, -cameraCenter.transform.position.x);
 		UpdateFrustum (cameraRight, -bounds.max.z, -bounds.min.z, bounds.min.y, bounds.max.y, bounds.max.x, 100,
 		               -cameraCenter.transform.position.z, cameraCenter.transform.position.y, cameraCenter.transform.position.x);
+		UpdateFrustum (cameraFloor, bounds.min.x, bounds.max.x, bounds.min.z, bounds.max.z, -bounds.min.y, 100,
+		               cameraCenter.transform.position.x, cameraCenter.transform.position.z, -cameraCenter.transform.position.y);
 	}
 
 	void UpdateFrustum(Camera camera, float l, float r, float b, float t, float n, float f, float x, float y, float z) {
@@ -70,6 +73,7 @@ public class NiwController : MonoBehaviour {
 		DrawFrustum (cameraCenter);
 		DrawFrustum (cameraLeft);
 		DrawFrustum (cameraRight);
+		DrawFrustum (cameraFloor);
 	}
 
 	// http://forum.unity3d.com/threads/drawfrustum-is-drawing-incorrectly.208081/

@@ -10,13 +10,19 @@ public class NiwController : MonoBehaviour {
 	public Camera cameraRight;
 	public Camera cameraFloor;
 
+	public GameObject playerController;
+
 	// Use this for initialization
 	void Start () {
-
+		playerController = transform.FindChild ("PlayerController").gameObject;
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		// dummy position
+		var pos = new Vector3 (-Input.mousePosition.x / Screen.width + 0.5f, 1.7f, -Input.mousePosition.y / Screen.height + 0.5f);
+		playerController.transform.position = pos;
+
 		bounds.center = transform.position;
 
 		//cameraCenter.transform.position = bounds.center;

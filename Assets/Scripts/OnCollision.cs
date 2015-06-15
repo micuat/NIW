@@ -1,17 +1,18 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class OnCollision : MonoBehaviour {
 
 	// Use this for initialization
-	void Start () {
-	
+	void Start (){
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void OnCollisionEnter(Collision collisionInfo) {
+		this.gameObject.tag = "activeTerrain";
+	}
 
-
-	
+	void OnCollisionExit(Collision collisionInfo){
+		this.gameObject.tag = "inactiveTerrain";
 	}
 }

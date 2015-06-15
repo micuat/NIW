@@ -13,7 +13,7 @@ public class TextureIdentify : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		terrain = Terrain.activeTerrain;
+		terrain = GameObject.FindWithTag ("activeTerrain").GetComponent<Terrain>();
 		terrainData = terrain.terrainData;
 		terrainPos = terrain.transform.position;
 		//rend.GetComponent<Renderer> ();

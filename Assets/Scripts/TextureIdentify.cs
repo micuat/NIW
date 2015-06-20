@@ -10,7 +10,15 @@ public class TextureIdentify : MonoBehaviour {
 	private Vector3 terrainPos;
 	
 	void OnCollisionEnter(Collision col){
-		terrain = col.gameObject.GetComponent<Terrain> ();
+		if (col.gameObject.name == "Terrain") {
+			terrain = Terrain.activeTerrain;
+		}
+		int ChunkIndex;
+		for (ChunkIndex =1; ChunkIndex <= 200; ChunkIndex++){
+			if(col.gameObject.name == "Chunk " + ChunkIndex.ToString()){
+				terrain = GameObject.Find(col.gameObject.name).GetComponent<Terrain>();
+			}
+		}
 	}
 
 	// Use this for initialization

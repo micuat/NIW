@@ -8,12 +8,17 @@ public class TextureIdentify : MonoBehaviour {
 	private Terrain terrain;
 	private TerrainData terrainData;
 	private Vector3 terrainPos;
-	public Renderer rend;
 	
+	void OnCollisionEnter(Collision col){
+		terrain = col.gameObject.GetComponent<Terrain> ();
+	}
+
 	// Use this for initialization
 	void Start () {
 
-		terrain = GameObject.FindWithTag ("activeTerrain").GetComponent<Terrain>();
+//		terrain = Collision.gameObject.GetComponent<Terrain> ();
+//		terrain = GameObject.FindWithTag ("activeTerrain").GetComponent<Terrain>();
+//		terrain = Terrain.activeTerrain;
 		terrainData = terrain.terrainData;
 		terrainPos = terrain.transform.position;
 		//rend.GetComponent<Renderer> ();
@@ -74,16 +79,5 @@ public class TextureIdentify : MonoBehaviour {
 		}
 		return maxIndex;
 	}
-
-	//public void colorChange(int Index){
-	//if (Index == 0) {
-	//	rend.material.color = new Color(1.0f, 0.0f, 0.0f, 1.0f);
-	//	} else if (Index == 1) {
-	//		rend.material.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-	//	} else if (Index == 2) {
-	//		rend.material.color = new Color(0.0f, 1.0f, 0.0f, 1.0f);
-	//	}
-	//}
-
 }
 

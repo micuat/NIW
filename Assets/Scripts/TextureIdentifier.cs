@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TextureIdentify : MonoBehaviour {
+public class TextureIdentifier : MonoBehaviour {
 
 
 	public int surfaceIndex = 0;
@@ -9,7 +9,10 @@ public class TextureIdentify : MonoBehaviour {
 	private TerrainData terrainData;
 	private Vector3 terrainPos;
 	public Renderer rend;
-	
+
+    public Collider rayCollider;
+    GameObject objectUnderFoot;
+
 	// Use this for initialization
 	void Start () {
 
@@ -18,22 +21,56 @@ public class TextureIdentify : MonoBehaviour {
 		terrainPos = terrain.transform.position;
 		//rend.GetComponent<Renderer> ();
 		//rend.enabled = true;
+
+        rayCollider = GetComponent<Collider>();
+        Physics.IgnoreCollision(rayCollider, transform.parent.GetComponent<Collider>());
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 
 		surfaceIndex = GetMainTexture(transform.position);
 	//	colorChange(surfaceIndex);
 
+        GetCollision();
 	}
 
 	void OnGUI(){
 
 		GUI.Box (new Rect( 100, 100, 200, 25), "Index: "+surfaceIndex.ToString()+
 		         ", name: "+terrainData.splatPrototypes[surfaceIndex].texture.name);
+        if(objectUnderFoot != null)
+            GUI.Box (new Rect( 100, 130, 200, 25), "name: " + objectUnderFoot.name);
 	}
 
+    void GetCollision()
+    {
+        // shoot a ray downwards.
+        // RaycastAll is too much; collision filtering can be done by layers
+        // but here we stick to RaycastAll for future modification
+        // like composite texture/object etc.
+        RaycastHit[] hits;
+        hits = Physics.RaycastAll(transform.position + transform.up, -transform.up, 1000.0f);
+
+        objectUnderFoot = null;
+        float closestDistance = 1000.0f;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit hit = hits[i];
+
+            if (hit.collider.gameObject.layer == 8) // HapticTexture
+            {
+                if (hit.distance < closestDistance)
+                {
+                    closestDistance = hit.distance;
+                    objectUnderFoot = hit.collider.gameObject;
+                }
+            }
+        }
+    }
+
+    // http://answers.unity3d.com/questions/456973/getting-the-texture-of-a-certain-point-on-terrain.html
 	private float[] GetTextureMix(Vector3 WorldPos){
 		// returns an array containing the relative mix of textures
 		// on the main terrain at this world position.

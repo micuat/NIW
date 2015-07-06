@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 
-using Ventuz.OSC;
+using Rug.Osc;
 
-public class NiwController : MonoBehaviour {
+public class NiwController : ReceiveOscBehaviourBase {
 
 	public Bounds bounds;
 
@@ -17,56 +17,14 @@ public class NiwController : MonoBehaviour {
 
 	public GameObject playerController;
 
-	bool initialized = false;
-	UdpReader oscReader;
-
-	// Use this for initialization
+    // Use this for initialization
 	void Start () {
+        base.Start();
 		playerController = transform.FindChild ("PlayerController").gameObject;
-
-		oscReader = new UdpReader(57121);
-		initialized = true;
-	}
-
-	void ParseMessages()
-	{
-		// Loop until failure
-		while (true)
-		{
-			// Recieve message from Stack
-			OscMessage message = oscReader.Receive();
-			
-			// Return if there are no more messages available
-			if (message == null) return;
-			OscBundle bundle = message as OscBundle;
-			if (bundle == null) return;
-			
-			// Enumerate over all elements
-			IEnumerator e = bundle.Elements.GetEnumerator();
-			while (e.MoveNext())
-			{
-				// Check if element matches OSC path of this gameObject
-				OscElement el = e.Current as OscElement;
-				if (el.Match("/vicon/Position0"))
-				{
-					var v = new Vector3(-(float)(double)el.Args[0], (float)(double)el.Args[2], -(float)(double)el.Args[1]);
-					playerController.transform.position = v;
-				}
-				if (el.Match("/vicon/Quaternion0"))
-				{
-					var q = new Quaternion((float)(double)el.Args[0], (float)(double)el.Args[1], (float)(double)el.Args[2], (float)(double)el.Args[3]);
-				}
-			}
-		}
 	}
 
 	// Update is called once per frame
 	void Update () {
-		// Wait for initialization
-		if (!initialized) return;
-		ParseMessages();
-
-		
 		// dummy position
 		//var pos = new Vector3 (-Input.mousePosition.x / Screen.width + 0.5f, 1.7f, -Input.mousePosition.y / Screen.height + 0.5f);
 		//playerController.transform.position = pos;
@@ -76,6 +34,19 @@ public class NiwController : MonoBehaviour {
 		//cameraCenter.transform.position = bounds.center;
 		UpdateFrustums ();
 	}
+
+    protected override void ReceiveMessage(OscMessage message) {
+        // addresses must be listed in Inspector/Osc Addresses
+        if (message.Address.Equals("/vicon/Position0"))
+        {
+            var v = new Vector3(-(float)message[0], (float)message[2], -(float)message[1]);
+            playerController.transform.localPosition = v;
+        }
+        if (message.Address.Equals("/vicon/Quaternion0"))
+        {
+            //var q = new Quaternion((float)message[0], (float)message[1], (float)message[2], (float)message[3]);
+        }
+    }
 
 	void UpdateFrustums() {
 		UpdateFrustum (cameraCenter, bounds.min.x, bounds.max.x, bounds.min.y, bounds.max.y, bounds.max.z, 100,

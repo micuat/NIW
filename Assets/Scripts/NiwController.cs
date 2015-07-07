@@ -36,15 +36,16 @@ public class NiwController : ReceiveOscBehaviourBase {
 	}
 
     protected override void ReceiveMessage(OscMessage message) {
+        //Debug.Log(message);
         // addresses must be listed in Inspector/Osc Addresses
         if (message.Address.Equals("/vicon/Position0"))
         {
-            var v = new Vector3(-(float)message[0], (float)message[2], -(float)message[1]);
+            var v = new Vector3((float)(double)message[0], (float)(double)message[2], (float)(double)message[1]);
             playerController.transform.localPosition = v;
         }
         if (message.Address.Equals("/vicon/Quaternion0"))
         {
-            //var q = new Quaternion((float)message[0], (float)message[1], (float)message[2], (float)message[3]);
+            //var q = new Quaternion((float)(double)message[0], (float)(double)message[1], (float)(double)message[2], (float)(double)message[3]);
         }
     }
 

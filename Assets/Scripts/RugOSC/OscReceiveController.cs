@@ -2,7 +2,6 @@
 using System.Net;
 using System.Collections;
 using UnityEngine;
-using UnityEditor;
 using Rug.Osc;
 
 public class OscReceiveController : MonoBehaviour

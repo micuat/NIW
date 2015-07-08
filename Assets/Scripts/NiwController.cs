@@ -24,6 +24,8 @@ public class NiwController : ReceiveOscBehaviourBase {
 
     public bool doInitializeNiw = true;
 
+    private List<GameObject> hapticDebugObjects = new List<GameObject>();
+
     // Use this for initialization
 	public override void Start ()
     {
@@ -89,13 +91,28 @@ public class NiwController : ReceiveOscBehaviourBase {
         else if (message.Address.Equals("/niw/client/aggregator/floorcontact"))
         {
             // Floor input
+            int id = (int)message[1];
+            float x =  ((float)message[2] / 6.0f - 0.5f) * bounds.extents.x * 2;
+            float z = -((float)message[3] / 6.0f - 0.5f) * bounds.extents.z * 2;
+
             if (((string)message[0]).Equals("add"))
             {
                 var debugObject = GameObject.Instantiate(HapticDebugObject);
                 debugObject.transform.parent = this.transform;
-                float x =  ((float)message[2] / 6.0f - 0.5f) * bounds.extents.x * 2;
-                float z = -((float)message[3] / 6.0f - 0.5f) * bounds.extents.z * 2;
                 debugObject.transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
+
+                while (hapticDebugObjects.Count < id + 1)
+                {
+                    hapticDebugObjects.Add(null);
+                }
+                hapticDebugObjects[id] = debugObject;
+            }
+            else if (((string)message[0]).Equals("update"))
+            {
+                if (id < hapticDebugObjects.Count)
+                {
+                    hapticDebugObjects[id].transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
+                }
             }
         }
     }

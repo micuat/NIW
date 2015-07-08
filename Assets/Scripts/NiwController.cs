@@ -48,6 +48,9 @@ public class NiwController : ReceiveOscBehaviourBase {
         #region init NIW
 
         Send(new OscMessage("/niw/server/config/invert/low/avg/zero", 0));
+        Send(new OscMessage("/niw/server/push/invert/low/avg/zero/contactdetect", "aggregator/floorcontact"));
+        Send(new OscMessage("/niw/server/config/invert/low", 0.025f));
+        Send(new OscMessage("/niw/server/config/invert/low/avg/zero/contactdetect", 10000));
 
         #endregion
     }

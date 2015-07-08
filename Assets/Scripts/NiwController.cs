@@ -94,12 +94,13 @@ public class NiwController : ReceiveOscBehaviourBase {
             int id = (int)message[1];
             float x =  ((float)message[2] / 6.0f - 0.5f) * bounds.extents.x * 2;
             float z = -((float)message[3] / 6.0f - 0.5f) * bounds.extents.z * 2;
+            var position = new Vector3(x, -bounds.extents.y - 0.1f, z);
 
             if (((string)message[0]).Equals("add"))
             {
                 var debugObject = GameObject.Instantiate(HapticDebugObject);
                 debugObject.transform.parent = this.transform;
-                debugObject.transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
+                debugObject.transform.localPosition = position;
 
                 while (hapticDebugObjects.Count < id + 1)
                 {
@@ -111,7 +112,7 @@ public class NiwController : ReceiveOscBehaviourBase {
             {
                 if (id < hapticDebugObjects.Count)
                 {
-                    hapticDebugObjects[id].transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
+                    hapticDebugObjects[id].transform.localPosition = position;
                 }
             }
             else if (((string)message[0]).Equals("remove"))
@@ -121,6 +122,20 @@ public class NiwController : ReceiveOscBehaviourBase {
                     hapticDebugObjects[id].GetComponent<HapticDebugController>().HapticRemove();
                 }
             }
+
+            #region update haptic feedback aka object under foot
+
+            var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position);
+            if (objectUnderFoot.name.Equals("Terrain"))
+            {
+                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetColor(1, 0, 0, 1);
+            }
+            else if (objectUnderFoot.name.Equals("Cube"))
+            {
+                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetColor(0, 0, 1, 1);
+            }
+
+            #endregion
         }
     }
 

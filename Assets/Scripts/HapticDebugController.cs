@@ -26,10 +26,7 @@ public class HapticDebugController : MonoBehaviour {
             Destroy(gameObject);
         }
 
-        var material = GetComponent<Renderer>().material;
-        var color = material.GetColor("_Color");
-        color.a = alpha;
-        material.SetColor("_Color", color);
+        SetColor(-1, -1, -1, alpha);
 
         #endregion
     }
@@ -37,5 +34,16 @@ public class HapticDebugController : MonoBehaviour {
     public void HapticRemove()
     {
         startTime = Time.time;
+    }
+
+    public void SetColor(float r, float g, float b, float a)
+    {
+        var material = GetComponent<Renderer>().material;
+        var color = material.GetColor("_Color");
+        if (r >= 0) color.r = r;
+        if (g >= 0) color.g = g;
+        if (b >= 0) color.b = b;
+        if (a >= 0) color.a = a;
+        material.SetColor("_Color", color);
     }
 }

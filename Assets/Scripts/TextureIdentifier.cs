@@ -4,14 +4,14 @@ using System.Collections;
 public class TextureIdentifier : MonoBehaviour {
 
 
-	public int surfaceIndex = 0;
+	private int surfaceIndex = 0;
 	private Terrain terrain;
 	private TerrainData terrainData;
 	private Vector3 terrainPos;
-	public Renderer rend;
+	//public Renderer rend;
 
-    public Collider rayCollider;
-    GameObject objectUnderFoot;
+    private Collider rayCollider;
+    private GameObject objectUnderFoot;
 
 	// Use this for initialization
 	void Start () {
@@ -32,7 +32,6 @@ public class TextureIdentifier : MonoBehaviour {
 		surfaceIndex = GetMainTexture(transform.position);
 	//	colorChange(surfaceIndex);
 
-        GetCollision();
 	}
 
 	void OnGUI(){
@@ -43,14 +42,15 @@ public class TextureIdentifier : MonoBehaviour {
             GUI.Box (new Rect( 100, 130, 200, 25), "name: " + objectUnderFoot.name);
 	}
 
-    void GetCollision()
+    // shoot a ray downwards. Return the object found
+    public GameObject GetCollision(Vector3 localPosition)
     {
         // shoot a ray downwards.
         // RaycastAll is too much; collision filtering can be done by layers
         // but here we stick to RaycastAll for future modification
         // like composite texture/object etc.
         RaycastHit[] hits;
-        hits = Physics.RaycastAll(transform.position + transform.up, -transform.up, 1000.0f);
+        hits = Physics.RaycastAll(localPosition + transform.position + transform.up, -transform.up, 1000.0f);
 
         objectUnderFoot = null;
         float closestDistance = 1000.0f;
@@ -68,6 +68,8 @@ public class TextureIdentifier : MonoBehaviour {
                 }
             }
         }
+
+        return objectUnderFoot;
     }
 
     // http://answers.unity3d.com/questions/456973/getting-the-texture-of-a-certain-point-on-terrain.html

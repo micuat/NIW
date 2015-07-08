@@ -20,6 +20,10 @@ public class NiwController : ReceiveOscBehaviourBase {
     public GameObject sendControllerObject;
     private OscSendController m_SendController;
 
+    public GameObject HapticDebugObject;
+
+    public bool doInitializeNiw = true;
+
     // Use this for initialization
 	public override void Start ()
     {
@@ -47,10 +51,13 @@ public class NiwController : ReceiveOscBehaviourBase {
 
         #region init NIW
 
-        Send(new OscMessage("/niw/server/config/invert/low/avg/zero", 0));
-        Send(new OscMessage("/niw/server/push/invert/low/avg/zero/contactdetect", "aggregator/floorcontact"));
-        Send(new OscMessage("/niw/server/config/invert/low", 0.025f));
-        Send(new OscMessage("/niw/server/config/invert/low/avg/zero/contactdetect", 10000));
+        if (doInitializeNiw)
+        {
+            Send(new OscMessage("/niw/server/config/invert/low/avg/zero", 0));
+            Send(new OscMessage("/niw/server/push/invert/low/avg/zero/contactdetect", "aggregator/floorcontact"));
+            Send(new OscMessage("/niw/server/config/invert/low", 0.025f));
+            Send(new OscMessage("/niw/server/config/invert/low/avg/zero/contactdetect", 10000));
+        }
 
         #endregion
     }
@@ -81,8 +88,15 @@ public class NiwController : ReceiveOscBehaviourBase {
         }
         else if (message.Address.Equals("/niw/client/aggregator/floorcontact"))
         {
-            // Floor
-            Debug.Log("message");
+            // Floor input
+            if (((string)message[0]).Equals("add"))
+            {
+                var debugObject = GameObject.Instantiate(HapticDebugObject);
+                debugObject.transform.parent = this.transform;
+                float x =  ((float)message[2] / 6.0f - 0.5f) * bounds.extents.x * 2;
+                float z = -((float)message[3] / 6.0f - 0.5f) * bounds.extents.z * 2;
+                debugObject.transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
+            }
         }
     }
 

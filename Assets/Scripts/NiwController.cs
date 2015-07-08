@@ -114,6 +114,13 @@ public class NiwController : ReceiveOscBehaviourBase {
                     hapticDebugObjects[id].transform.localPosition = new Vector3(x, -bounds.extents.y - 0.1f, z);
                 }
             }
+            else if (((string)message[0]).Equals("remove"))
+            {
+                if (id < hapticDebugObjects.Count)
+                {
+                    hapticDebugObjects[id].GetComponent<HapticDebugController>().HapticRemove();
+                }
+            }
         }
     }
 

@@ -6,37 +6,40 @@ using Rug.Osc;
 public abstract class ReceiveOscBehaviourBase : MonoBehaviour
 {
 
-    private OscReceiveController m_ReceiveController;
+    private List<OscReceiveController> m_ReceiveControllers;
 
-    public GameObject ReceiveController;
+    public List<GameObject> ReceiveControllers;
 
     public List<string> OscAddresses;
 
     public void Awake()
     {
-        m_ReceiveController = null;
+        m_ReceiveControllers = new List<OscReceiveController>();
 
-        if (ReceiveController == null)
+        if (ReceiveControllers.Count == 0)
         {
             Debug.LogError("You must supply a ReceiveController");
             return;
         }
 
-        OscReceiveController controller = ReceiveController.GetComponent<OscReceiveController>();
-
-        if (controller == null)
+        foreach (var ReceiveController in ReceiveControllers)
         {
-            Debug.LogError(string.Format("The GameObject with the name '{0}' does not contain a OscReceiveController component", ReceiveController.name));
-            return;
-        }
+            OscReceiveController controller = ReceiveController.GetComponent<OscReceiveController>();
 
-        m_ReceiveController = controller;
+            if (controller == null)
+            {
+                Debug.LogError(string.Format("The GameObject with the name '{0}' does not contain a OscReceiveController component", ReceiveController.name));
+                return;
+            }
+
+            m_ReceiveControllers.Add(controller);
+        }
     }
 
     // Use this for initialization
     public virtual void Start()
     {
-        if (m_ReceiveController != null)
+        foreach(var m_ReceiveController in m_ReceiveControllers)
         {
             foreach (var address in OscAddresses)
             {
@@ -50,7 +53,7 @@ public abstract class ReceiveOscBehaviourBase : MonoBehaviour
     {
 
         // detach from the OscAddressManager
-        if (m_ReceiveController != null)
+        foreach (var m_ReceiveController in m_ReceiveControllers)
         {
             foreach (var address in OscAddresses)
             {

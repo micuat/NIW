@@ -15,13 +15,42 @@ public class NiwController : ReceiveOscBehaviourBase {
 	public Camera cameraRight;
 	public Camera cameraFloor;
 
-	public GameObject playerController;
+	private GameObject playerController;
+
+    public GameObject sendControllerObject;
+    private OscSendController m_SendController;
 
     // Use this for initialization
-	void Start () {
+	public override void Start ()
+    {
+        playerController = transform.FindChild("PlayerController").gameObject;
+
+        #region init receiver
+
         base.Start();
-		playerController = transform.FindChild ("PlayerController").gameObject;
-	}
+
+        #endregion
+
+        #region init sender
+
+        OscSendController controller = sendControllerObject.GetComponent<OscSendController>();
+
+        if (controller == null)
+        {
+            Debug.LogError(string.Format("The GameObject with the name '{0}' does not contain a OscSendController component", sendControllerObject.name));
+            return;
+        }
+
+        m_SendController = controller;
+
+        #endregion
+
+        #region init NIW
+
+        Send(new OscMessage("/niw/server/config/invert/low/avg/zero", 0));
+
+        #endregion
+    }
 
 	// Update is called once per frame
 	void Update () {
@@ -36,16 +65,32 @@ public class NiwController : ReceiveOscBehaviourBase {
 	}
 
     protected override void ReceiveMessage(OscMessage message) {
-        //Debug.Log(message);
+        Debug.Log(message);
         // addresses must be listed in Inspector/Osc Addresses
         if (message.Address.Equals("/vicon/Position0"))
         {
             var v = new Vector3((float)(double)message[0], (float)(double)message[2], (float)(double)message[1]);
             playerController.transform.localPosition = v;
         }
-        if (message.Address.Equals("/vicon/Quaternion0"))
+        else if (message.Address.Equals("/vicon/Quaternion0"))
         {
             //var q = new Quaternion((float)(double)message[0], (float)(double)message[1], (float)(double)message[2], (float)(double)message[3]);
+        }
+        else if (message.Address.Equals("/niw/client/aggregator/floorcontact"))
+        {
+            // Floor
+            Debug.Log("message");
+        }
+    }
+
+    public void Send(OscMessage msg)
+    {
+
+        if (m_SendController != null)
+        {
+            // Send the message
+            m_SendController.Sender.Send(msg);
+            Debug.Log(msg);
         }
     }
 

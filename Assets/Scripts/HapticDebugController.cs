@@ -36,6 +36,34 @@ public class HapticDebugController : MonoBehaviour {
         startTime = Time.time;
     }
 
+    public void SetTexture(NiwController.HapticTexture texture)
+    {
+        if (texture == NiwController.HapticTexture.None)
+        {
+            SetColor(0, 0, 0, 1);
+        }
+        else if (texture == NiwController.HapticTexture.Can)
+        {
+            SetColor(1, 1, 0, 1);
+        }
+        else if (texture == NiwController.HapticTexture.Ice)
+        {
+            SetColor(0, 0.5f, 1, 1);
+        }
+        else if (texture == NiwController.HapticTexture.Water)
+        {
+            SetColor(0, 0, 1, 1);
+        }
+        else if (texture == NiwController.HapticTexture.Sand)
+        {
+            SetColor(1, 0.5f, 0, 1);
+        }
+        else if (texture == NiwController.HapticTexture.Snow)
+        {
+            SetColor(0.8f, 0.8f, 1, 1);
+        }
+    }
+
     public void SetColor(float r, float g, float b, float a)
     {
         var material = GetComponent<Renderer>().material;

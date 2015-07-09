@@ -23,13 +23,13 @@ public class TextureIdentifier : MonoBehaviour {
 		//rend.enabled = true;
 
         rayCollider = GetComponent<Collider>();
-        Physics.IgnoreCollision(rayCollider, transform.parent.GetComponent<Collider>());
+        //Physics.IgnoreCollision(rayCollider, transform.parent.GetComponent<Collider>());
 	}
 
 	// Update is called once per frame
 	void Update () {
 
-		surfaceIndex = GetMainTexture(transform.position);
+	//	surfaceIndex = GetMainTexture(transform.position);
 	//	colorChange(surfaceIndex);
 
 	}
@@ -43,7 +43,7 @@ public class TextureIdentifier : MonoBehaviour {
 	}
 
     // shoot a ray downwards. Return the object found
-    public GameObject GetCollision(Vector3 localPosition)
+    public GameObject GetCollision(Vector3 localPosition, out int terrainType)
     {
         // shoot a ray downwards.
         // RaycastAll is too much; collision filtering can be done by layers
@@ -59,7 +59,7 @@ public class TextureIdentifier : MonoBehaviour {
         {
             RaycastHit hit = hits[i];
 
-            if (hit.collider.gameObject.layer == 8) // HapticTexture
+            if (hit.collider.gameObject.layer == 8 || hit.collider.gameObject.tag.Equals("HapticTexture")) // HapticTexture
             {
                 if (hit.distance < closestDistance)
                 {
@@ -68,6 +68,8 @@ public class TextureIdentifier : MonoBehaviour {
                 }
             }
         }
+
+        terrainType = GetMainTexture(localPosition + transform.position);
 
         return objectUnderFoot;
     }

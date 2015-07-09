@@ -6,25 +6,51 @@ using System.Collections;
 
 using Rug.Osc;
 
-public class NiwController : ReceiveOscBehaviourBase {
+public class NiwController : ReceiveOscBehaviourBase
+{
 
-	public Bounds bounds;
+    #region define CAVE parameters
+
+    public Bounds bounds;
 
 	public Camera cameraCenter;
 	public Camera cameraLeft;
 	public Camera cameraRight;
 	public Camera cameraFloor;
 
-	private GameObject playerController;
+    #endregion
+
+    #region define Vicon Parameters
+
+    private GameObject playerController;
+
+    #endregion
+
+    #region define OSC sender
 
     public GameObject sendControllerObject;
     private OscSendController m_SendController;
 
-    public GameObject HapticDebugObject;
-
+    // NIW must be initialized when java server is launched to start OSC streaming.
+    // Since this takes ~10 seconds and the server can be kept running regardless of the Unity player,
+    // turn off this flag to skip initialization procedure once the server is initialized.
     public bool doInitializeNiw = true;
 
+    #endregion
+
+    #region define haptic handlers
+
+    public GameObject HapticDebugObject;
+
     private List<GameObject> hapticDebugObjects = new List<GameObject>();
+
+    public enum HapticTexture {None, Ice, Snow, Sand, Water, Can};
+
+    public GameObject IceObject;
+    public GameObject TerrainObject;
+    public GameObject WaterObject;
+
+    #endregion
 
     // Use this for initialization
 	public override void Start ()
@@ -77,7 +103,8 @@ public class NiwController : ReceiveOscBehaviourBase {
 	}
 
     protected override void ReceiveMessage(OscMessage message) {
-        Debug.Log(message);
+        // Debug.Log(message);
+        
         // addresses must be listed in Inspector/Osc Addresses
         if (message.Address.Equals("/vicon/Position0"))
         {
@@ -125,14 +152,34 @@ public class NiwController : ReceiveOscBehaviourBase {
 
             #region update haptic feedback aka object under foot
 
-            var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position);
-            if (objectUnderFoot.name.Equals("Terrain"))
+            int terrainType;
+            var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
+            if (objectUnderFoot == TerrainObject)
             {
-                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetColor(1, 0, 0, 1);
+                if (terrainType == 0)
+                {
+                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
+                }
+                else if (terrainType == 1)
+                {
+                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Sand);
+                }
+                else
+                {
+                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Snow);
+                }
             }
-            else if (objectUnderFoot.name.Equals("Cube"))
+            else if (objectUnderFoot == IceObject)
             {
-                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetColor(0, 0, 1, 1);
+                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Ice);
+            }
+            else if (objectUnderFoot == WaterObject)
+            {
+                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Water);
+            }
+            else
+            {
+                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
             }
 
             #endregion

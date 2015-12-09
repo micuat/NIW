@@ -22,9 +22,10 @@ public class FractureChunk : MonoBehaviour
 	public void ApplyForce(Vector3 impactPoint)
 	{
 		GetComponent<MeshFilter>().sharedMesh = meshDouble;
+        GetComponent<MeshCollider>().sharedMesh = null;
 
-		forceAccumulation += 1;
-		float d = 5.0f;
+        forceAccumulation += 1;
+		float d = 0.5f;
 		transform.Rotate (new Vector3(Random.Range(-d, d), Random.Range(-d, d), Random.Range(-d, d)));
 
 		if(forceAccumulation >= 2) {
@@ -125,10 +126,11 @@ public class FractureChunk : MonoBehaviour
 			meshDouble.triangles = triangles.ToArray();
 			meshDouble.RecalculateBounds();
 
-			// not separated at first
-			GetComponent<MeshFilter>().sharedMesh = meshSunnyside;
+            // not separated at first
+            GetComponent<MeshFilter>().sharedMesh = meshSunnyside;
+            GetComponent<MeshCollider>().sharedMesh = meshSunnyside;
 
-			GetComponent<Renderer>().sharedMaterial = material;
+            GetComponent<Renderer>().sharedMaterial = material;
 		}
 	}
 }

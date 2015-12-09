@@ -33,16 +33,18 @@ public class VoronoiDemo : MonoBehaviour
 		CreateChunks();
 	}
 
+    public void CrackAt(Vector3 v)
+    {
+        v.y = 0;
+        handlers.Add(new HapticHandler(chunks, bounds, v, -Random.Range(1, 10000), this));
+    }
+
     void Update()
 	{
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			handlers.Add(new HapticHandler(chunks, bounds, new Vector3(Random.Range (-2.4f, 2.4f), 0, Random.Range (-2.4f, 2.4f)), -Random.Range(1, 10000), this));
-		}
 		if (Input.GetKeyDown(KeyCode.C))
         {
 			handlers.Clear();
         }
-        Debug.Log(Input.GetAxis("Horizontal"));
     }
 
     void CreateChunks()
@@ -57,7 +59,7 @@ public class VoronoiDemo : MonoBehaviour
 		{
 			GameObject chunk = Instantiate(chunkObj, cell.site.ToVector3(), Quaternion.identity) as GameObject;
 			chunk.transform.parent = gameObject.transform;
-			chunk.layer = 8; // interObjects
+			//chunk.layer = 8; // interObjects
             chunk.name = "Chunk " + cell.site.id;
 			chunk.GetComponent<FractureChunk>().cell = cell;
 			chunks.Add(chunk);

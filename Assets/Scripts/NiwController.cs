@@ -13,6 +13,9 @@ public class NiwController : ReceiveOscBehaviourBase
 
     #region define CAVE parameters
 
+    public const int tileRows = 6;
+    public const int tileCols = 6;
+
     public Bounds bounds;
 
 	public Camera cameraCenter;
@@ -45,6 +48,7 @@ public class NiwController : ReceiveOscBehaviourBase
     public GameObject HapticDebugObject;
 
     private List<GameObject> hapticDebugObjects = new List<GameObject>();
+    private List<GameObject> hapticDebugGrid = new List<GameObject>();
 
     public enum HapticTexture {None, Ice, Snow, Sand, Water, Can};
 
@@ -54,7 +58,11 @@ public class NiwController : ReceiveOscBehaviourBase
 
     #endregion
 
+    public GameObject voronoiController;
+
     private Wiimote wiimote;
+
+    public bool ShowHapticDebugObjects = true;
 
     // Use this for initialization
     public override void Start ()
@@ -93,7 +101,16 @@ public class NiwController : ReceiveOscBehaviourBase
 
         #endregion
 
+        for (int i = 0; i < tileRows; i++)
+        {
+            for (int j = 0; j < tileCols; j++)
+            {
+                var debugObject = GameObject.Instantiate(HapticDebugObject);
+                debugObject.transform.parent = this.transform;
 
+                hapticDebugGrid.Add(debugObject);
+            }
+        }
     }
 
     // Update is called once per frame
@@ -107,9 +124,58 @@ public class NiwController : ReceiveOscBehaviourBase
 		//cameraCenter.transform.position = bounds.center;
 		UpdateFrustums ();
 
+        for (int i = 0; i < tileRows; i++)
+        {
+            for (int j = 0; j < tileCols; j++)
+            {
+                var hapticDebug = hapticDebugGrid[i * tileCols + j];
+                var position = hapticDebug.transform.localPosition;
+                position.x = ((j + 0.5f) / 6.0f - 0.5f) * bounds.extents.x * 2;
+                position.y = -bounds.extents.y;
+                position.z = -((i + 0.5f) / 6.0f - 0.5f) * bounds.extents.z * 2;
+                hapticDebug.transform.localPosition = position;
+
+                hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
+
+                int terrainType;
+                var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
+                if (objectUnderFoot == TerrainObject)
+                {
+                    if (terrainType == 0)
+                    {
+                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
+                    }
+                    else if (terrainType == 1)
+                    {
+                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Sand);
+                    }
+                    else
+                    {
+                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Snow);
+                    }
+                }
+                else if (objectUnderFoot.layer == 9)
+                {
+                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Ice);
+                }
+                else if (objectUnderFoot == WaterObject)
+                {
+                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Water);
+                }
+                else
+                {
+                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
+                }
+            }
+        }
 
         bool goForward, goBack, goLeft, goRight, goUp, goDown;
         goForward = goBack = goLeft = goRight = goUp = goDown = false;
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            voronoiController.GetComponent<VoronoiDemo>().CrackAt(transform.position);
+        }
 
         if (!WiimoteManager.HasWiimote()) {
             WiimoteManager.FindWiimotes();
@@ -174,6 +240,10 @@ public class NiwController : ReceiveOscBehaviourBase
                 if (wiimote.Button.b)
                 {
                     goDown = true;
+                }
+                if (wiimote.Button.one)
+                {
+                    voronoiController.GetComponent<VoronoiDemo>().CrackAt(transform.position);
                 }
 
                 if (wiimote.current_ext == ExtensionController.NUNCHUCK)

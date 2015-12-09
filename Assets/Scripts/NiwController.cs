@@ -6,6 +6,8 @@ using System.Collections;
 
 using Rug.Osc;
 
+using WiimoteApi;
+
 public class NiwController : ReceiveOscBehaviourBase
 {
 
@@ -52,8 +54,10 @@ public class NiwController : ReceiveOscBehaviourBase
 
     #endregion
 
+    private Wiimote wiimote;
+
     // Use this for initialization
-	public override void Start ()
+    public override void Start ()
     {
         playerController = transform.FindChild("PlayerController").gameObject;
 
@@ -88,10 +92,12 @@ public class NiwController : ReceiveOscBehaviourBase
         }
 
         #endregion
+
+
     }
 
-	// Update is called once per frame
-	void Update () {
+    // Update is called once per frame
+    void Update () {
 		// dummy position
 		//var pos = new Vector3 (-Input.mousePosition.x / Screen.width + 0.5f, 1.7f, -Input.mousePosition.y / Screen.height + 0.5f);
 		//playerController.transform.position = pos;
@@ -100,7 +106,100 @@ public class NiwController : ReceiveOscBehaviourBase
 		
 		//cameraCenter.transform.position = bounds.center;
 		UpdateFrustums ();
-	}
+
+
+        bool goForward, goBack, goLeft, goRight, goUp, goDown;
+        goForward = goBack = goLeft = goRight = goUp = goDown = false;
+
+        if (!WiimoteManager.HasWiimote()) {
+            WiimoteManager.FindWiimotes();
+
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                goLeft = true;
+            }
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                goRight = true;
+            }
+            if (Input.GetKey(KeyCode.UpArrow))
+            {
+                goForward = true;
+            }
+            if (Input.GetKey(KeyCode.DownArrow))
+            {
+                goBack = true;
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                goUp = true;
+            }
+            if (Input.GetKey(KeyCode.Z))
+            {
+                goDown = true;
+            }
+
+        }
+        else
+        {
+
+            wiimote = WiimoteManager.Wiimotes[0];
+
+            int ret;
+            do
+            {
+                ret = wiimote.ReadWiimoteData();
+
+                Debug.Log(wiimote.Button.d_left + " " + wiimote.Button.d_right);
+                if (wiimote.Button.d_left)
+                {
+                    goLeft = true;
+                }
+                if (wiimote.Button.d_right)
+                {
+                    goRight = true;
+                }
+                if (wiimote.Button.d_up)
+                {
+                    goForward = true;
+                }
+                if (wiimote.Button.d_down)
+                {
+                    goBack = true;
+                }
+                if (wiimote.Button.a)
+                {
+                    goUp = true;
+                }
+                if (wiimote.Button.b)
+                {
+                    goDown = true;
+                }
+
+                if (wiimote.current_ext == ExtensionController.NUNCHUCK)
+                {
+                    NunchuckData ndata = wiimote.Nunchuck;
+                    Debug.Log("Stick: " + ndata.stick[0] + ", " + ndata.stick[1]);
+                }
+                else
+                {
+                }
+            } while (ret > 0);
+        }
+
+        if(goLeft)
+            GetComponent<Rigidbody>().AddForce(new Vector3(-1, 0, 0));
+        if(goRight)
+            GetComponent<Rigidbody>().AddForce(new Vector3(1, 0, 0));
+        if (goForward)
+            GetComponent<Rigidbody>().AddForce(new Vector3(0, 0, 1));
+        if (goBack)
+            GetComponent<Rigidbody>().AddForce(new Vector3(0, 0, -1));
+        if (goUp)
+            GetComponent<Rigidbody>().AddForce(new Vector3(0, 1, 0));
+        if (goDown)
+            GetComponent<Rigidbody>().AddForce(new Vector3(0, -1, 0));
+    }
 
     protected override void ReceiveMessage(OscMessage message) {
         // Debug.Log(message);
@@ -198,26 +297,36 @@ public class NiwController : ReceiveOscBehaviourBase
     }
 
 	void UpdateFrustums() {
-		UpdateFrustum (cameraCenter, bounds.min.x, bounds.max.x, bounds.min.y, bounds.max.y, bounds.max.z, 100,
-		               cameraCenter.transform.position.x, cameraCenter.transform.position.y, cameraCenter.transform.position.z);
-		UpdateFrustum (cameraLeft, bounds.min.z, bounds.max.z, bounds.min.y, bounds.max.y, -bounds.min.x, 100,
-		               cameraCenter.transform.position.z, cameraCenter.transform.position.y, -cameraCenter.transform.position.x);
-		UpdateFrustum (cameraRight, -bounds.max.z, -bounds.min.z, bounds.min.y, bounds.max.y, bounds.max.x, 100,
-		               -cameraCenter.transform.position.z, cameraCenter.transform.position.y, cameraCenter.transform.position.x);
-		UpdateFrustum (cameraFloor, bounds.min.x, bounds.max.x, bounds.min.z, bounds.max.z, -bounds.min.y, 100,
-		               cameraCenter.transform.position.x, cameraCenter.transform.position.z, -cameraCenter.transform.position.y);
-	}
+        Vector3 tl = Vector3.zero;
+        Vector3 br = Vector3.zero;
+        tl = new Vector3(-bounds.extents.x, bounds.extents.y, bounds.extents.z);
+        br = new Vector3(bounds.extents.x, -bounds.extents.y, bounds.extents.z);
+        UpdateFrustum(cameraCenter, tl.x, br.x, br.y, tl.y, tl.z, 1000,
+                       playerController.transform.localPosition.x, playerController.transform.localPosition.y, playerController.transform.localPosition.z);
+        tl = new Vector3(-bounds.extents.z, bounds.extents.y, bounds.extents.x);
+        br = new Vector3(bounds.extents.z, -bounds.extents.y, bounds.extents.x);
+        UpdateFrustum(cameraLeft, tl.x, br.x, br.y, tl.y, tl.z, 1000,
+                       playerController.transform.localPosition.z, playerController.transform.localPosition.y, -playerController.transform.localPosition.x);
+        tl = new Vector3(-bounds.extents.z, bounds.extents.y, bounds.extents.x);
+        br = new Vector3(bounds.extents.z, -bounds.extents.y, bounds.extents.x);
+        UpdateFrustum(cameraRight, tl.x, br.x, br.y, tl.y, tl.z, 1000,
+                       -playerController.transform.localPosition.z, playerController.transform.localPosition.y, playerController.transform.localPosition.x);
+        tl = new Vector3(-bounds.extents.x, bounds.extents.z, bounds.extents.y);
+        br = new Vector3(bounds.extents.x, -bounds.extents.z, bounds.extents.y);
+        UpdateFrustum(cameraFloor, tl.x, br.x, br.y, tl.y, tl.z, 1000,
+                       playerController.transform.localPosition.x, playerController.transform.localPosition.z, -playerController.transform.localPosition.y);
+    }
 
-	void UpdateFrustum(Camera camera, float l, float r, float b, float t, float n, float f, float x, float y, float z) {
-		camera.projectionMatrix = MakeFrustum(l - x,
-		                                      r - x,
-		                                      b - y,
-		                                      t - y,
-		                                      n - z,
-		                                      f - z);
-	}
-
-	Matrix4x4 MakeFrustum(float l, float r, float b, float t, float n, float f) {
+    void UpdateFrustum(Camera camera, float l, float r, float b, float t, float n, float f, float x, float y, float z)
+    {
+        camera.projectionMatrix = MakeFrustum((l - x) / 16,
+                                              (r - x) / 16,
+                                              (b - y) / 16,
+                                              (t - y) / 16,
+                                              (n - z) / 16,
+                                              f - z);
+    }
+    Matrix4x4 MakeFrustum(float l, float r, float b, float t, float n, float f) {
 		var mat = new Matrix4x4();
 		mat[0, 0] = 2 * n / (r - l);
 		mat[0, 1] = 0;

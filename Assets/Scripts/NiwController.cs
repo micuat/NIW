@@ -64,6 +64,9 @@ public class NiwController : ReceiveOscBehaviourBase
 
     public bool ShowHapticDebugObjects = true;
 
+    [Header("Haptic Handlers")]
+    private object[] floorStatus;
+
     // Use this for initialization
     public override void Start ()
     {
@@ -111,6 +114,35 @@ public class NiwController : ReceiveOscBehaviourBase
                 hapticDebugGrid.Add(debugObject);
             }
         }
+
+        floorStatus = new object[tileCols * tileRows];
+        for (int i = 0; i < tileCols; i++)
+        {
+            for (int j = 0; j < tileRows; j++)
+            {
+                floorStatus[i * tileCols + j] = "";
+            }
+        }
+    }
+
+    private bool HasFloorChanged(object[] o)
+    {
+        int c = 0;
+
+        for (int i = 0; i < tileCols; i++)
+        {
+            for (int j = 0; j < tileRows; j++)
+            {
+                if (!(floorStatus[i * tileCols + j].ToString()).Equals(o[i * tileCols + j].ToString()))
+                {
+                    c++;
+                }
+            }
+        }
+
+        floorStatus = o;
+
+        return c != 0;
     }
 
     // Update is called once per frame
@@ -124,6 +156,8 @@ public class NiwController : ReceiveOscBehaviourBase
 		//cameraCenter.transform.position = bounds.center;
 		UpdateFrustums ();
 
+        object[] pars = new object[tileRows * tileCols];
+        
         for (int i = 0; i < tileRows; i++)
         {
             for (int j = 0; j < tileCols; j++)
@@ -138,35 +172,56 @@ public class NiwController : ReceiveOscBehaviourBase
                 hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
 
                 int terrainType;
+                HapticTexture hapticType;
+                string hapticString = "none";
                 var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
                 if (objectUnderFoot == TerrainObject)
                 {
                     if (terrainType == 0)
                     {
-                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
+                        hapticType = HapticTexture.None;
+
                     }
                     else if (terrainType == 1)
                     {
-                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Sand);
+                        hapticType = HapticTexture.Sand;
+                        hapticString = "sand";
                     }
                     else
                     {
-                        hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Snow);
+                        hapticType = HapticTexture.Snow;
+                        hapticString = "snow";
                     }
                 }
                 else if (objectUnderFoot.layer == 9)
                 {
-                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Ice);
+                    hapticType = HapticTexture.Ice;
+                    hapticString = "ice";
                 }
                 else if (objectUnderFoot == WaterObject)
                 {
-                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.Water);
+                    hapticType = HapticTexture.Water;
+                    hapticString = "water";
                 }
                 else
                 {
-                    hapticDebug.GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
+                    hapticType = HapticTexture.None;
                 }
+
+                hapticDebug.GetComponent<HapticDebugController>().SetTexture(hapticType);
+                pars[i * tileRows + j] = hapticString;
             }
+        }
+
+        if (HasFloorChanged(pars))
+        {
+            Send(new OscMessage("/niw/server/max/preset/matrix", pars));
+        }
+
+        foreach(var hapticDebug in hapticDebugObjects)
+        {
+            if(hapticDebug != null)
+                hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
         }
 
         bool goForward, goBack, goLeft, goRight, goUp, goDown;
@@ -216,7 +271,7 @@ public class NiwController : ReceiveOscBehaviourBase
             {
                 ret = wiimote.ReadWiimoteData();
 
-                Debug.Log(wiimote.Button.d_left + " " + wiimote.Button.d_right);
+                //Debug.Log(wiimote.Button.d_left + " " + wiimote.Button.d_right);
                 if (wiimote.Button.d_left)
                 {
                     goLeft = true;
@@ -249,7 +304,7 @@ public class NiwController : ReceiveOscBehaviourBase
                 if (wiimote.current_ext == ExtensionController.NUNCHUCK)
                 {
                     NunchuckData ndata = wiimote.Nunchuck;
-                    Debug.Log("Stick: " + ndata.stick[0] + ", " + ndata.stick[1]);
+                    //Debug.Log("Stick: " + ndata.stick[0] + ", " + ndata.stick[1]);
                 }
                 else
                 {
@@ -302,7 +357,9 @@ public class NiwController : ReceiveOscBehaviourBase
                 {
                     hapticDebugObjects.Add(null);
                 }
+                debugObject.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
                 hapticDebugObjects[id] = debugObject;
+                voronoiController.GetComponent<VoronoiDemo>().CrackAt(debugObject.transform.position);
             }
             else if (((string)message[0]).Equals("update"))
             {

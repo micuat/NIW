@@ -51,6 +51,7 @@ public class NiwController : ReceiveOscBehaviourBase
     private List<GameObject> hapticDebugGrid = new List<GameObject>();
 
     public enum HapticTexture {None, Ice, Snow, Sand, Water, Can};
+    public string[] HapticTextureString = new string[6] { "none", "ice", "snow", "sand", "water", "can" };
 
     public GameObject IceObject;
     public GameObject TerrainObject;
@@ -145,6 +146,43 @@ public class NiwController : ReceiveOscBehaviourBase
         return c != 0;
     }
 
+    HapticTexture FindTextureUnder(Vector3 position)
+    {
+        int terrainType;
+        HapticTexture hapticType;
+        var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
+        if (objectUnderFoot == TerrainObject)
+        {
+            if (terrainType == 0)
+            {
+                hapticType = HapticTexture.None;
+
+            }
+            else if (terrainType == 1)
+            {
+                hapticType = HapticTexture.Sand;
+            }
+            else
+            {
+                hapticType = HapticTexture.Snow;
+            }
+        }
+        else if (objectUnderFoot.layer == 9)
+        {
+            hapticType = HapticTexture.Ice;
+        }
+        else if (objectUnderFoot == WaterObject)
+        {
+            hapticType = HapticTexture.Water;
+        }
+        else
+        {
+            hapticType = HapticTexture.None;
+        }
+
+        return hapticType;
+    }
+
     // Update is called once per frame
     void Update () {
 		// dummy position
@@ -171,45 +209,10 @@ public class NiwController : ReceiveOscBehaviourBase
 
                 hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
 
-                int terrainType;
-                HapticTexture hapticType;
-                string hapticString = "none";
-                var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
-                if (objectUnderFoot == TerrainObject)
-                {
-                    if (terrainType == 0)
-                    {
-                        hapticType = HapticTexture.None;
-
-                    }
-                    else if (terrainType == 1)
-                    {
-                        hapticType = HapticTexture.Sand;
-                        hapticString = "sand";
-                    }
-                    else
-                    {
-                        hapticType = HapticTexture.Snow;
-                        hapticString = "snow";
-                    }
-                }
-                else if (objectUnderFoot.layer == 9)
-                {
-                    hapticType = HapticTexture.Ice;
-                    hapticString = "ice";
-                }
-                else if (objectUnderFoot == WaterObject)
-                {
-                    hapticType = HapticTexture.Water;
-                    hapticString = "water";
-                }
-                else
-                {
-                    hapticType = HapticTexture.None;
-                }
+                HapticTexture hapticType = FindTextureUnder(position);
 
                 hapticDebug.GetComponent<HapticDebugController>().SetTexture(hapticType);
-                pars[i * tileRows + j] = hapticString;
+                pars[i * tileRows + j] = HapticTextureString[(int)hapticType];
             }
         }
 
@@ -378,35 +381,8 @@ public class NiwController : ReceiveOscBehaviourBase
 
             #region update haptic feedback aka object under foot
 
-            int terrainType;
-            var objectUnderFoot = GetComponent<TextureIdentifier>().GetCollision(position, out terrainType);
-            if (objectUnderFoot == TerrainObject)
-            {
-                if (terrainType == 0)
-                {
-                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
-                }
-                else if (terrainType == 1)
-                {
-                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Sand);
-                }
-                else
-                {
-                    hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Snow);
-                }
-            }
-            else if (objectUnderFoot == IceObject)
-            {
-                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Ice);
-            }
-            else if (objectUnderFoot == WaterObject)
-            {
-                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.Water);
-            }
-            else
-            {
-                hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(HapticTexture.None);
-            }
+            HapticTexture hapticType = FindTextureUnder(position);
+            hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(hapticType);
 
             #endregion
         }

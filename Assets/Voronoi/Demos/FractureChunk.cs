@@ -28,7 +28,7 @@ public class FractureChunk : MonoBehaviour
 		float d = 0.5f;
 		transform.Rotate (new Vector3(Random.Range(-d, d), Random.Range(-d, d), Random.Range(-d, d)));
 
-		if(forceAccumulation >= 2) {
+		if(forceAccumulation >= 10) {
 			separated = true;
 
  			if(!GetComponent<Rigidbody>()) {

@@ -233,6 +233,23 @@ public class NiwController : ReceiveOscBehaviourBase
         if (Input.GetKeyDown(KeyCode.Space))
         {
             voronoiController.GetComponent<VoronoiDemo>().CrackAt(transform.position);
+            var debugObject = GameObject.Instantiate(HapticDebugObject);
+            //debugObject.transform.parent = this.transform;
+            var position = transform.position;
+            position.y += -bounds.extents.y;
+            debugObject.transform.localPosition = position;
+
+            int id = 0;
+            while (hapticDebugObjects.Count < id + 1)
+            {
+                hapticDebugObjects.Add(null);
+            }
+            debugObject.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
+            hapticDebugObjects[id] = debugObject;
+
+            HapticTexture hapticType = FindTextureUnder(Vector3.zero);
+            debugObject.GetComponent<HapticDebugController>().SetTexture(hapticType);
+            voronoiController.GetComponent<VoronoiDemo>().CrackAt(debugObject.transform.position);
         }
 
         if (!WiimoteManager.HasWiimote()) {

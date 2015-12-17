@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class HapticDebugController : MonoBehaviour {
+public class ContactController : MonoBehaviour {
 
     float startTime = 0;
     public float duration = 1f;

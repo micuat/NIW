@@ -45,10 +45,10 @@ public class NiwController : ReceiveOscBehaviourBase
 
     #region define haptic handlers
 
-    public GameObject HapticDebugObject;
+    public GameObject ContactObject;
 
-    private List<GameObject> hapticDebugObjects = new List<GameObject>();
-    private List<GameObject> hapticDebugGrid = new List<GameObject>();
+    private List<GameObject> ContactObjects = new List<GameObject>();
+    private List<GameObject> ContactGrid = new List<GameObject>();
 
     public enum HapticTexture {None, Ice, Snow, Sand, Water, Can};
     public string[] HapticTextureString = new string[6] { "none", "ice", "snow", "sand", "water", "can" };
@@ -63,7 +63,7 @@ public class NiwController : ReceiveOscBehaviourBase
 
     private Wiimote wiimote;
 
-    public bool ShowHapticDebugObjects = true;
+    public bool ShowHapticControllers = true;
 
     [Header("Haptic Handlers")]
     private object[] floorStatus;
@@ -109,10 +109,10 @@ public class NiwController : ReceiveOscBehaviourBase
         {
             for (int j = 0; j < tileCols; j++)
             {
-                var debugObject = GameObject.Instantiate(HapticDebugObject);
-                debugObject.transform.parent = this.transform;
+                var contactObject = Instantiate(ContactObject);
+                contactObject.transform.parent = transform;
 
-                hapticDebugGrid.Add(debugObject);
+                ContactGrid.Add(contactObject);
             }
         }
 
@@ -183,6 +183,14 @@ public class NiwController : ReceiveOscBehaviourBase
         return hapticType;
     }
 
+    Vector3 FloorToLocalCoordinate(float u, float v)
+    {
+        float x = ((u + 0.5f) / 6.0f - 0.5f) * bounds.extents.x * 2;
+        float y = -bounds.extents.y;
+        float z = -((v + 0.5f) / 6.0f - 0.5f) * bounds.extents.z * 2;
+        return new Vector3(x, y, z);
+    }
+
     // Update is called once per frame
     void Update () {
 		// dummy position
@@ -200,18 +208,15 @@ public class NiwController : ReceiveOscBehaviourBase
         {
             for (int j = 0; j < tileCols; j++)
             {
-                var hapticDebug = hapticDebugGrid[i * tileCols + j];
-                var position = hapticDebug.transform.localPosition;
-                position.x = ((j + 0.5f) / 6.0f - 0.5f) * bounds.extents.x * 2;
-                position.y = -bounds.extents.y;
-                position.z = -((i + 0.5f) / 6.0f - 0.5f) * bounds.extents.z * 2;
-                hapticDebug.transform.localPosition = position;
+                var contactObject = ContactGrid[i * tileCols + j];
+                var position = FloorToLocalCoordinate(j, i);
+                contactObject.transform.localPosition = position;
 
-                hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
+                contactObject.GetComponent<MeshRenderer>().enabled = ShowHapticControllers;
 
                 HapticTexture hapticType = FindTextureUnder(position);
 
-                hapticDebug.GetComponent<HapticDebugController>().SetTexture(hapticType);
+                contactObject.GetComponent<ContactController>().SetTexture(hapticType);
                 pars[i * tileRows + j] = HapticTextureString[(int)hapticType];
             }
         }
@@ -221,10 +226,10 @@ public class NiwController : ReceiveOscBehaviourBase
             Send(new OscMessage("/niw/server/max/preset/matrix", pars));
         }
 
-        foreach(var hapticDebug in hapticDebugObjects)
+        foreach(var contactObject in ContactObjects)
         {
-            if(hapticDebug != null)
-                hapticDebug.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
+            if(contactObject != null)
+                contactObject.GetComponent<MeshRenderer>().enabled = ShowHapticControllers;
         }
 
         bool goForward, goBack, goLeft, goRight, goUp, goDown;
@@ -232,23 +237,21 @@ public class NiwController : ReceiveOscBehaviourBase
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            var debugObject = GameObject.Instantiate(HapticDebugObject);
-            //debugObject.transform.parent = this.transform;
-            var position = transform.position;
-            position.y += -bounds.extents.y;
-            debugObject.transform.localPosition = position;
+            var contactObject = GameObject.Instantiate(ContactObject);
+            var position = transform.position + FloorToLocalCoordinate(2.5f, 2.5f);
+            contactObject.transform.localPosition = position;
 
             int id = 0;
-            while (hapticDebugObjects.Count < id + 1)
+            while (ContactObjects.Count < id + 1)
             {
-                hapticDebugObjects.Add(null);
+                ContactObjects.Add(null);
             }
-            debugObject.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
-            hapticDebugObjects[id] = debugObject;
+            contactObject.GetComponent<MeshRenderer>().enabled = ShowHapticControllers;
+            ContactObjects[id] = contactObject;
 
             HapticTexture hapticType = FindTextureUnder(Vector3.zero);
-            debugObject.GetComponent<HapticDebugController>().SetTexture(hapticType);
-            voronoiController.GetComponent<VoronoiDemo>().CrackAt(debugObject.transform.position);
+            contactObject.GetComponent<ContactController>().SetTexture(hapticType);
+            voronoiController.GetComponent<VoronoiDemo>().CrackAt(contactObject.transform.position);
         }
 
         if (!WiimoteManager.HasWiimote()) {
@@ -319,15 +322,6 @@ public class NiwController : ReceiveOscBehaviourBase
                 {
                     voronoiController.GetComponent<VoronoiDemo>().CrackAt(transform.position);
                 }
-
-                if (wiimote.current_ext == ExtensionController.NUNCHUCK)
-                {
-                    NunchuckData ndata = wiimote.Nunchuck;
-                    //Debug.Log("Stick: " + ndata.stick[0] + ", " + ndata.stick[1]);
-                }
-                else
-                {
-                }
             } while (ret > 0);
         }
 
@@ -362,43 +356,41 @@ public class NiwController : ReceiveOscBehaviourBase
         {
             // Floor input
             int id = (int)message[1];
-            float x =  ((float)message[2] / 6.0f - 0.5f) * bounds.extents.x * 2;
-            float z = -((float)message[3] / 6.0f - 0.5f) * bounds.extents.z * 2;
-            var position = new Vector3(x, -bounds.extents.y - 0.1f, z);
+            var position = FloorToLocalCoordinate((float)message[2], (float)message[3]);
 
             if (((string)message[0]).Equals("add"))
             {
-                var debugObject = GameObject.Instantiate(HapticDebugObject);
-                debugObject.transform.parent = this.transform;
-                debugObject.transform.localPosition = position;
+                var contactObject = Instantiate(ContactObject);
+                contactObject.transform.parent = transform;
+                contactObject.transform.localPosition = position;
 
-                while (hapticDebugObjects.Count < id + 1)
+                while (ContactObjects.Count < id + 1)
                 {
-                    hapticDebugObjects.Add(null);
+                    ContactObjects.Add(null);
                 }
-                debugObject.GetComponent<MeshRenderer>().enabled = ShowHapticDebugObjects;
-                hapticDebugObjects[id] = debugObject;
-                voronoiController.GetComponent<VoronoiDemo>().CrackAt(debugObject.transform.position);
+                contactObject.GetComponent<MeshRenderer>().enabled = ShowHapticControllers;
+                ContactObjects[id] = contactObject;
+                voronoiController.GetComponent<VoronoiDemo>().CrackAt(contactObject.transform.position);
             }
             else if (((string)message[0]).Equals("update"))
             {
-                if (id < hapticDebugObjects.Count)
+                if (id < ContactObjects.Count)
                 {
-                    hapticDebugObjects[id].transform.localPosition = position;
+                    ContactObjects[id].transform.localPosition = position;
                 }
             }
             else if (((string)message[0]).Equals("remove"))
             {
-                if (id < hapticDebugObjects.Count)
+                if (id < ContactObjects.Count)
                 {
-                    hapticDebugObjects[id].GetComponent<HapticDebugController>().HapticRemove();
+                    ContactObjects[id].GetComponent<ContactController>().HapticRemove();
                 }
             }
 
             #region update haptic feedback aka object under foot
 
             HapticTexture hapticType = FindTextureUnder(position);
-            hapticDebugObjects[id].GetComponent<HapticDebugController>().SetTexture(hapticType);
+            ContactObjects[id].GetComponent<ContactController>().SetTexture(hapticType);
 
             #endregion
         }

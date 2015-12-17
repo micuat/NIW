@@ -232,7 +232,6 @@ public class NiwController : ReceiveOscBehaviourBase
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            voronoiController.GetComponent<VoronoiDemo>().CrackAt(transform.position);
             var debugObject = GameObject.Instantiate(HapticDebugObject);
             //debugObject.transform.parent = this.transform;
             var position = transform.position;

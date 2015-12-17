@@ -22,7 +22,7 @@ public class FractureChunk : MonoBehaviour
 	public void ApplyForce(Vector3 impactPoint)
 	{
 		GetComponent<MeshFilter>().sharedMesh = meshDouble;
-        GetComponent<MeshCollider>().sharedMesh = null;
+        GetComponent<MeshCollider>().sharedMesh = meshDouble;
 
         forceAccumulation += 1;
 		float d = 0.5f;
@@ -30,8 +30,9 @@ public class FractureChunk : MonoBehaviour
 
 		if(forceAccumulation >= 10) {
 			separated = true;
+            GetComponent<MeshCollider>().sharedMesh = null;
 
- 			if(!GetComponent<Rigidbody>()) {
+            if (!GetComponent<Rigidbody>()) {
 				Rigidbody rigidBody = gameObject.AddComponent<Rigidbody>();
 				GetComponent<Rigidbody>().useGravity = false;
 				rigidBody.mass = 1;
